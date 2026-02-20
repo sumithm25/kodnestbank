@@ -23,7 +23,8 @@ export default function Register() {
         setError('');
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/register', formData);
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            await axios.post(`${API_BASE_URL}/api/register`, formData);
             navigate('/login');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');

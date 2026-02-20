@@ -21,7 +21,8 @@ export default function Dashboard() {
     const checkBalance = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/balance', {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            const res = await axios.get(`${API_BASE_URL}/api/balance`, {
                 withCredentials: true
             });
             setBalance(res.data.balance);

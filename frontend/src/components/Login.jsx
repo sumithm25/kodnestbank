@@ -20,7 +20,8 @@ export default function Login() {
         setError('');
         setLoading(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/login', formData, {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            const res = await axios.post(`${API_BASE_URL}/api/login`, formData, {
                 withCredentials: true
             });
             localStorage.setItem('user', JSON.stringify(res.data.user));
