@@ -65,6 +65,47 @@ async function ensureTables() {
     }
 }
 
+// 0. Diagnostic Endpoint (for debugging 500 errors)
+app.get('/api/diag', async (req, res) => {
+    const configStatus = {
+        DB_HOST: !!process.env.DB_HOST,
+        DB_PORT: !!process.env.DB_PORT,
+        DB_USER: !!process.env.DB_USER,
+        DB_PASSWORD: !!process.env.DB_PASSWORD,
+        DB_NAME: !!process.env.DB_NAME,
+        JWT_SECRET: !!process.env.JWT_SECRET,
+        NODE_ENV: process.env.NODE_ENV
+    };
+
+    let dbStatus = 'Not tested';
+    let dbError = null;
+
+    try {
+        const connection = await pool.getConnection();
+        await connection.query('SELECT 1');
+        connection.release();
+        dbStatus = 'Connected Successfully 🚀';
+    } catch (err) {
+        dbStatus = 'Failed to Connect ❌';
+        dbError = {
+            message: err.message,
+            code: err.code,
+            syscall: err.syscall,
+            hostname: err.hostname
+        };
+    }
+
+    res.json({
+        message: 'Kodbank API Diagnostic Report',
+        config: configStatus,
+        database: {
+            status: dbStatus,
+            error: dbError
+        },
+        time: new Date().toISOString()
+    });
+});
+
 // 1. User Registration
 app.post('/api/register', async (req, res) => {
     console.log('Registration attempt:', req.body.username);
@@ -83,7 +124,12 @@ app.post('/api/register', async (req, res) => {
     } catch (error) {
         console.error('Registration error:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'Username or Email already exists' });
-        res.status(500).json({ message: 'Internal server error', details: error.message });
+        // Return details to frontend for easier debugging
+        res.status(500).json({
+            message: 'Database/Server Error during registration',
+            details: error.message,
+            code: error.code
+        });
     }
 });
 
@@ -115,7 +161,11 @@ app.post('/api/login', async (req, res) => {
         res.json({ message: 'Login successful', user: { uid: user.uid, username: user.username, role: user.role } });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Internal server error', details: error.message });
+        res.status(500).json({
+            message: 'Database/Server Error during login',
+            details: error.message,
+            code: error.code
+        });
     }
 });
 
