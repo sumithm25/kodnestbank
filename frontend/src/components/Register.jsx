@@ -24,10 +24,13 @@ export default function Register() {
         setLoading(true);
         try {
             const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-            await axios.post(`${API_BASE_URL}/api/register`, formData);
+            await axios.post(`${API_BASE_URL}/api/register`, formData, {
+                withCredentials: true
+            });
             navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed');
+            console.error('Registration error:', err);
+            setError(err.response?.data?.message || 'Registration failed. Is the backend URL correct?');
         } finally {
             setLoading(false);
         }
