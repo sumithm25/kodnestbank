@@ -30,7 +30,10 @@ export default function Register() {
             navigate('/login');
         } catch (err) {
             console.error('Registration error:', err);
-            setError(err.response?.data?.message || 'Registration failed. Is the backend URL correct?');
+            const msg = err.response?.data?.details
+                ? `${err.response.data.message}: ${err.response.data.details}`
+                : (err.response?.data?.message || 'Registration failed. Is the backend URL correct?');
+            setError(msg);
         } finally {
             setLoading(false);
         }

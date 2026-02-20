@@ -131,6 +131,16 @@ app.get('/api/balance', authenticateToken, async (req, res) => {
     }
 });
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('SERVER ERROR:', err);
+    res.status(500).json({ message: 'Internal server error', details: err.message });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
