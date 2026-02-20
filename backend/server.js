@@ -9,14 +9,11 @@ const { pool, setupDatabase } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware (Hardcoded for specific Vercel deployment)
+// Middleware (Permissive for final connectivity debugging)
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'https://kodnestbank-n0scua8lh-sumith-ms-projects.vercel.app'
-    ],
-    credentials: true
+    origin: true, // Allow all origins for this final debugging phase
+    credentials: true,
+    exposedHeaders: ['set-cookie']
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -25,6 +22,11 @@ app.use(cookieParser());
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
     next();
+});
+
+// Health Check Endpoint
+app.get('/api/health', (res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 // Initialize Database
