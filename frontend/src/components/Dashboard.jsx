@@ -23,7 +23,10 @@ export default function Dashboard() {
         try {
             const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             const res = await axios.get(`${API_BASE_URL}/api/balance`, {
-                withCredentials: true
+                withCredentials: true,
+                headers: {
+                    'bypass-tunnel-reminder': 'true'
+                }
             });
             setBalance(res.data.balance);
 

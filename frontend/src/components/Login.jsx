@@ -23,7 +23,10 @@ export default function Login() {
             const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             console.log('Attempting login at:', `${API_BASE_URL}/api/login`);
             const res = await axios.post(`${API_BASE_URL}/api/login`, formData, {
-                withCredentials: true
+                withCredentials: true,
+                headers: {
+                    'bypass-tunnel-reminder': 'true'
+                }
             });
             localStorage.setItem('user', JSON.stringify(res.data.user));
             navigate('/dashboard');
