@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // Switched to bcryptjs for serverless compatibility
 const mysql = require('mysql2/promise');
 
 const app = express();
@@ -25,10 +25,18 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Global Request Logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 // Database Setup Helper
 async function ensureTables() {
+    console.log('Ensuring tables exist...');
     try {
         const connection = await pool.getConnection();
+        console.log('DB Connection obtained.');
         await connection.query(`
             CREATE TABLE IF NOT EXISTS KodUser (
                 uid INT AUTO_INCREMENT PRIMARY KEY,
@@ -50,13 +58,16 @@ async function ensureTables() {
             )
         `);
         connection.release();
+        console.log('Tables verified.');
     } catch (err) {
-        console.error('API DB Init Error:', err);
+        console.error('CRITICAL: API DB Init Error:', err);
+        throw err; // Re-throw to be caught by request handler
     }
 }
 
 // 1. User Registration
 app.post('/api/register', async (req, res) => {
+    console.log('Registration attempt:', req.body.username);
     const { username, email, password, phone } = req.body;
     if (!username || !email || !password) return res.status(400).json({ message: 'Missing required fields' });
 
@@ -67,8 +78,10 @@ app.post('/api/register', async (req, res) => {
             'INSERT INTO KodUser (username, email, password, phone, role, balance) VALUES (?, ?, ?, ?, ?, ?)',
             [username, email, hashedPassword, phone, 'Customer', 100000.00]
         );
+        console.log('Registration success:', username);
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
+        console.error('Registration error:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'Username or Email already exists' });
         res.status(500).json({ message: 'Internal server error', details: error.message });
     }
@@ -76,6 +89,7 @@ app.post('/api/register', async (req, res) => {
 
 // 2. User Login
 app.post('/api/login', async (req, res) => {
+    console.log('Login attempt:', req.body.username);
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ message: 'Missing required fields' });
 
@@ -91,9 +105,16 @@ app.post('/api/login', async (req, res) => {
         const expiry = new Date(Date.now() + 3600000);
         await pool.query('INSERT INTO UserToken (token, uid, expiry) VALUES (?, ?, ?)', [token, user.uid, expiry]);
 
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 3600000 });
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            maxAge: 3600000
+        });
+        console.log('Login success:', username);
         res.json({ message: 'Login successful', user: { uid: user.uid, username: user.username, role: user.role } });
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({ message: 'Internal server error', details: error.message });
     }
 });
@@ -109,8 +130,15 @@ app.get('/api/balance', async (req, res) => {
         if (!users[0]) return res.status(404).json({ message: 'User not found' });
         res.json({ balance: users[0].balance });
     } catch (error) {
+        console.error('Balance check error:', error);
         res.status(403).json({ message: 'Invalid token' });
     }
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('UNHANDLED API ERROR:', err);
+    res.status(500).json({ message: 'Internal server error', details: err.message });
 });
 
 // Vercel Export
