@@ -9,20 +9,23 @@ const { pool, setupDatabase } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware (Relaxed for debugging Vercel connectivity)
+// Middleware (Hardcoded for specific Vercel deployment)
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow localhost and any vercel.app domain
-        if (!origin || origin.indexOf('localhost') !== -1 || origin.indexOf('vercel.app') !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'https://kodnestbank-n0scua8lh-sumith-ms-projects.vercel.app'
+    ],
     credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Global Request Logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    next();
+});
 
 // Initialize Database
 setupDatabase();
