@@ -29,10 +29,10 @@ export default function Register() {
             });
             navigate('/login');
         } catch (err) {
-            console.error('Registration error:', err);
+            console.error('Registration error details:', err.toJSON ? err.toJSON() : err);
             const msg = err.response?.data?.details
                 ? `${err.response.data.message}: ${err.response.data.details}`
-                : (err.response?.data?.message || 'Registration failed. Is the backend URL correct?');
+                : (err.response?.data?.message || err.message || 'Network Error: Backend unreachable');
             setError(msg);
         } finally {
             setLoading(false);
