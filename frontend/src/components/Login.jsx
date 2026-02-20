@@ -20,7 +20,7 @@ export default function Login() {
         setError('');
         setLoading(true);
         try {
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
             console.log('Attempting login at:', `${API_BASE_URL}/api/login`);
             const res = await axios.post(`${API_BASE_URL}/api/login`, formData, {
                 withCredentials: true,
